@@ -1,0 +1,334 @@
+#include "mbed.h"
+#include <cstdio>
+
+
+//NOTE: 
+BufferedSerial uart(PTC17, PTC16);
+
+//AnalogIn Wheel1Hall(PTB2);
+//AnalogIn Wheel2Hall(PTB11);
+//AnalogIn Wheel3Hall(PTB3);
+//PwmOut Dribbler(PTD3);  //MIGHT BE ERROR
+DigitalOut Dribbler(PTB23);
+//PwmOut DribblerEnable(PTC12);
+PwmOut Wheel1(PTD0);
+PwmOut Wheel2(PTC11);
+PwmOut Wheel3(PTC4);
+PwmOut Servo(PTC3);
+PwmOut Wheel1Direction(PTA2);
+PwmOut Wheel2Direction(PTD1);
+PwmOut Wheel3Direction(PTA1);
+//PwmOut Kicker(PTD0);
+AnalogOut Kicker(DAC0_OUT);
+PwmOut Wheel1Enable(PTC10);     
+PwmOut Wheel2Enable(PTD2);
+DigitalOut Wheel3Enable(PTB9);   //Change
+
+
+
+int main() {
+
+    Servo.period(0.020);
+    uart.set_baud(9600);
+    //Wheel1.period(0.001);
+    
+    //Wheel2.period(0.001);
+    Wheel3.period(0.001);
+    Wheel1Direction.period(0.001);
+    Wheel2Direction.period(0.001);
+    Wheel3Direction.period(0.001);
+    
+    Servo.period(0.001);
+    Wheel1Enable.period(0.001);
+    Wheel2Enable.period(0.001);
+ //   Wheel3Enable.period(0.001);
+
+
+
+    //float pulse_width_test = 0.002;
+    //float angle;
+
+
+
+    char receivedData[5]; // Array to store the received command (4 characters + '\0')
+
+    while (1) {
+
+
+
+        
+        if (uart.readable()) {
+            // Read the first character
+            char c;
+            uart.read(&c, 1);
+            
+
+            // Check if the received character is the start of the command
+            if (c == 'n' && uart.readable()) {
+                //printf("Received 'n'\n");
+                uart.read(&c, 1);
+
+                // Print received character for debugging
+                //printf("Received: %c\n", c);
+
+                // Check if the second character is '/'
+                if (c == '/') {
+                    //printf("Received '/'\n");
+
+                    // Read the next 4 characters
+                    for (int i = 0; i < 4; i++) {
+                        if (uart.readable()) {
+                            uart.read(&c, 1);
+                            receivedData[i] = c;
+                            // Print received character for debugging
+                            //printf("Received: %c\n", c);
+                        } else {
+                            // Handle the case where not enough characters are received
+                            //printf("Incomplete command\n");
+                            break;
+                        }
+                    }
+                    receivedData[4] = '\0'; // Null-terminate the string
+
+                    // Print received command for debugging
+                    //printf("Received Command: %s\n", receivedData);
+
+                    // Perform different actions based on the received command
+                    if (strcmp(receivedData, "frwd") == 0) {
+                        printf("Received Forward Command\n");
+                        // Add your forward action here
+                        float Hall2Count = 0;
+                        float Hall1Count = 0;
+                        
+                        Wheel1Enable.write(1);
+                        Wheel2Enable.write(1);
+                        Wheel3Enable = 0;
+                        
+                        Dribbler = 1;
+                        Wheel1.write(0.16);
+                        Wheel2.write(0.15);
+                        //Wheel2.write(1.0);
+                        Wheel3.write(0/3.3);
+                        Wheel1Direction.write(0.0);
+                        Wheel2Direction.write(1.0);
+                        wait_us(500000);
+                        Wheel1Enable.write(0);
+                        Wheel2Enable.write(0);
+                        Wheel3Enable = 0;
+
+                    } else if (strcmp(receivedData, "bkwd") == 0) {
+//                        for(x = 0; x <= 1; x += 0.2){
+                            printf("Received Backward Command\n");
+                            
+                            
+                            Wheel1Direction.write(1.0);
+                            Wheel2Direction.write(0.0);
+                            Wheel1Enable.write(1.0);
+//                            while(Wheel1Enable != 1.0){}
+                            Wheel2Enable.write(1.0);
+                            Wheel3Enable = 0;
+//                            for (times = 1; times<=20; times++){
+//                                wait_us(100000);
+//                            }
+                       
+                            //Remember Wheel 1 was 33% and wheel2 was 30% 
+                            //Wheel1 = 0.105;
+//                            while(Wheel1 != x){}
+                            //Wheel2.write(0.1);
+                            //Wheel2.write(1.0);
+                            Wheel3.write(0/3.3);
+//                            for (speed = 0.10; speed<=0.325; speed = speed+0.075){
+                                //for (increment = 0.01; increment<=0.03; increment = increment + 0.01){
+//                                Wheel1.write(speed+0.022);
+//                                Wheel2.write(speed);
+//                                wait_us(350000);
+                                //}
+//                            }
+
+                            Wheel1.write(0.1);
+                            Wheel2.write(0.1);
+
+//                        }
+                        // Add your backward action here
+                    } else if (strcmp(receivedData, "left") == 0) {
+                        printf("Received Left Command\n");
+                        Wheel1Enable.write(1.0);
+                        Wheel2Enable.write(1.0);
+                        Wheel3Enable = 1;
+                        wait_us(1000);
+                        Dribbler = 0;
+                        Wheel1Direction.write(1.0);
+                        Wheel2Direction.write(1.0);
+                        Wheel3Direction.write(1.0);
+                        
+                        
+                        Wheel1.write(0.15);
+                        Wheel2.write(0.15);
+                        Wheel3.write(0.15);
+                        wait_us(50000);
+                        Wheel1Enable.write(0);
+                        Wheel2Enable.write(0);
+                        Wheel3Enable = 0;
+                     
+                        
+                    
+                       
+                    } else if (strcmp(receivedData, "rigt") == 0) {
+                        printf("Received Right Command\n");
+                        Wheel1Enable.write(1.0);
+                        Wheel2Enable.write(1.0);
+                        Wheel3Enable = 1;
+                        wait_us(1000);
+                        Dribbler = 0;
+                        Wheel1Direction.write(0.0);
+                        Wheel2Direction.write(0.0);
+                        Wheel3Direction.write(0.0);
+                        
+                        
+                        Wheel1.write(0.15);
+                        Wheel2.write(0.15);
+                        Wheel3.write(0.15);
+                        wait_us(50000);
+                        Wheel1Enable.write(0);
+                        Wheel2Enable.write(0);
+                        Wheel3Enable = 0;
+                     
+                        // Add your right action here
+                    } else if (strcmp(receivedData, "full") == 0) {
+                        printf("Received Right Command\n");
+                        Wheel1Enable.write(1);
+                        Wheel2Enable.write(1);
+                        Wheel3Enable = 0;
+                        Wheel1Direction.write(0.0);
+                        Wheel2Direction.write(1.0);
+                        float x;
+                        for (x=0;x<=1;x=x+0.1){
+                            Wheel1.write(x);
+                            Wheel2.write(x);
+                            wait_us(200000);
+                            
+                        }
+                        
+                       
+                        //Wheel2.write(1.0);
+                        Wheel3.write(0/3.3);
+                        
+
+                        wait_us(4000000);
+                        Wheel1Enable.write(0);
+                        Wheel2Enable.write(0);
+                        Wheel3Enable = 0;
+
+                     
+                        // Add your right action here
+                    } else if (strcmp(receivedData, "stop") == 0) {
+                        printf("Received Stop Command\n");
+                        Wheel1Enable.write(0);
+                        Wheel2Enable.write(0);
+                        Wheel3Enable = 0;
+                  
+                        Servo.period_ms(0);
+                        Dribbler.write(0);
+                        
+                        // Add your stop action here
+                    }else if (strcmp(receivedData, "mrgt") == 0) {
+                        printf("Received Stop Command\n");
+                        Wheel1Enable.write(1);
+                        Wheel2Enable.write(1);
+                        Wheel3Enable = 1;
+                        Wheel1Direction.write(0);
+                        Wheel2Direction.write(0);
+                        Wheel3Direction.write(1);                        
+                        Wheel1.write(0.12);
+                        Wheel2.write(0.12);
+                        //Wheel2.write(0/3.3);
+                        Wheel3.write(0.24);
+//                        Dribbler.write(0);
+                       
+                        
+                        // Add your stop action here
+                    } else if (strcmp(receivedData, "mlft") == 0) {
+                        printf("Received Stop Command\n");
+                        Wheel1Enable.write(1);
+                        Wheel2Enable.write(1);
+                        Wheel3Enable = 1;
+                        Wheel1Direction.write(1);
+                        Wheel2Direction.write(1);
+                        Wheel3Direction.write(0);     
+                        Wheel1.write(0.12);
+                        Wheel2.write(0.12);
+                        //Wheel2.write(0/3.3);
+                        Wheel3.write(0.24);
+//                        Dribbler.write(0);
+                        
+                        
+                        // Add your stop action here
+                    } else if (strcmp(receivedData, "kick") == 0) {
+                        printf("Received Kick Command\n");
+                        Kicker = 1;
+                        wait_us(200000);
+                        Kicker = 0;
+                        // Add your kick action here
+                    } else if (strcmp(receivedData, "serm") == 0) {
+                        printf("Received Servo Middle Command\n");
+                        Servo.period_ms(20);
+                        
+                        Servo.pulsewidth_us(1500);
+                        wait_us(200000);
+                        // Add your kick action here
+                    } else if (strcmp(receivedData, "circ") == 0) {
+                        printf("Received Circle Command\n");
+                         Wheel1Enable.write(1.0);
+                        Wheel2Enable.write(1.0);
+                        Wheel3Enable = 1;
+                        wait_us(1000);
+                        Dribbler = 0;
+                        Wheel1Direction.write(0.0);
+                        Wheel2Direction.write(0.0);
+                        Wheel3Direction.write(0.0);
+                        
+                        
+                        Wheel1.write(0.15);
+                        Wheel2.write(0.15);
+                        Wheel3.write(0.15);
+                        wait_us(3000000);
+                        Wheel1Enable.write(0);
+                        Wheel2Enable.write(0);
+                        Wheel3Enable = 0;
+                        
+                        
+                    } else if (strcmp(receivedData, "serr") == 0) {
+                        printf("Received Servo Right Command\n");
+                        Servo.period_ms(20);
+                        
+                        Servo.pulsewidth_us(1000);
+                        // Add your kick action here
+                        wait_us(200000);
+                    } else if (strcmp(receivedData, "serl") == 0) {
+                        printf("Received Servo Left Command\n");
+                        Servo.period_ms(20);
+                        
+                        Servo.pulsewidth_us(2000);
+                       
+                       wait_us(200000);
+                        // Add your kick action here
+                    } else if (strcmp(receivedData, "drbl") == 0) {
+                        printf("Received Dribble Command\n");
+                        Dribbler.write(1);
+                        
+                        wait_us(10000000);
+                        Dribbler.write(0);
+                        
+
+                    } else {
+                        printf("Unknown Command\n");
+                        // Add your handling for unknown commands
+                    }
+                }
+            }
+        }
+
+        wait_us(100000);
+    }
+   
+}
